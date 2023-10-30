@@ -6,4 +6,10 @@
 1. Use MoE for FF layer
 # Run
 Run `cifar10_dit.py`
+# Samples
+From bs=512 step=100k
+
+![a](samples/105000.png)
+
+![a](samples/105000-proc.png)
 
