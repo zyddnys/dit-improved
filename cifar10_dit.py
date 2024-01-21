@@ -364,7 +364,7 @@ def main() :
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
     model = DiffusionModelConditional(cfg).cuda()
     #model.load_checkpoint('cifar10-ddim-dit-v2-fixed-sch-fp32-ema/checkpoints/epoch-511.ckpt')
-    model.train(trainset, {'batch_size': 512, 'num_workers': 8, 'pin_memory': True, 'shuffle': True}, 'cifar10-ddim-dit-v2-fixed-sch-fp32-ema')
+    model.train(trainset, {'batch_size': 256, 'num_workers': 8, 'pin_memory': True, 'shuffle': True}, 'cifar10-ddim-dit-moe-fp32-ema')
     #model.run_sampling('test_sampling')
     #model.run_sampling_ddim_acc('test_sampling')
 

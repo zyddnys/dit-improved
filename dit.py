@@ -22,6 +22,10 @@ from PIL import Image
 from tqdm.auto import tqdm
 
 from xpos_relative_position import XPOS, XPOS2D
+from deepseekmoe import DeepseekMoE2D
+
+class namespace :
+    pass
 
 class SinusoidalPosEmb(nn.Module):
     def __init__(self, dim):
@@ -246,10 +250,25 @@ class FeedForward(nn.Module) :
         return x
 
 class TransformerXpos2D(nn.Module) :
-    def __init__(self, dim, nhead, ff_dim, layer_norm_eps = 1e-6) -> None:
+    def __init__(self, dim, nhead, ff_dim, layer_norm_eps = 1e-6, use_moe = True) -> None:
         super().__init__()
         self.self_attn = XposMultiheadAttention2D(dim, nhead, self_attention = True, encoder_decoder_attention = False)
-        self.ff = FeedForward(dim, ff_dim)
+        if use_moe :
+            cfg = namespace()
+            cfg.n_shared_experts = 2 # 2 additional always in use
+            cfg.num_experts_per_tok = 4 # Top K experts in use, total 2+4 experts used
+            cfg.n_routed_experts = 24 # 24 optional experts, total 2+24 experts
+            cfg.scoring_func = 'softmax'
+            cfg.aux_loss_alpha = 0.001
+            cfg.seq_aux = True
+            cfg.norm_topk_prob = False
+            cfg.hidden_size = dim
+            cfg.intermediate_size = ff_dim
+            cfg.moe_intermediate_size = max((int(dim * 0.75) // 16), 1) * 16 # expert size
+            cfg.pretraining_tp = 1
+            self.ff = DeepseekMoE2D(cfg)
+        else :
+            self.ff = FeedForward(dim, ff_dim)
         self.norm1 = nn.LayerNorm(dim, eps = layer_norm_eps, elementwise_affine = False)
         self.norm2 = nn.LayerNorm(dim, eps = layer_norm_eps, elementwise_affine = False)
         # init alphas to 0, shifts to 0, scales to 1
